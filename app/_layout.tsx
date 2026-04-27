@@ -1,16 +1,23 @@
 import { Tabs } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 export default function AppLayout() {
+
+  const insets = useSafeAreaInsets();
+
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#10B981', // Verde principal (Emerald)
-        tabBarInactiveTintColor: '#64748B', // Cinza inativo
+        tabBarActiveTintColor: '#10B981',
+        tabBarInactiveTintColor: '#64748B',
         tabBarStyle: {
-          paddingBottom: 5,
+
+          paddingBottom: Math.max(insets.bottom, 10),
           paddingTop: 5,
-          height: 60,
+
+          height: 60 + insets.bottom,
         },
         headerStyle: {
           backgroundColor: '#10B981',
@@ -19,7 +26,7 @@ export default function AppLayout() {
         headerTitleAlign: 'center',
       }}
     >
-      {/* Rota principal: vai renderizar o app/index.tsx */}
+
       <Tabs.Screen
         name="index"
         options={{
@@ -30,8 +37,6 @@ export default function AppLayout() {
           ),
         }}
       />
-
-      {/* Rota do comparador: vai renderizar o app/comparador.tsx */}
       <Tabs.Screen
         name="comparador"
         options={{
@@ -42,8 +47,6 @@ export default function AppLayout() {
           ),
         }}
       />
-
-      {/* Rota do ranking: vai renderizar o app/ranking.tsx */}
       <Tabs.Screen
         name="ranking"
         options={{

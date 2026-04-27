@@ -1,50 +1,66 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, TextInput, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, TextInput, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router'; // Importe o router
 import { Co2CalculatorService } from '../src/services/Co2CalculatorService';
 import { CardTransporte } from '../src/components/CardTransporte';
+import { ResumoRota } from '../src/types'; // Importe a interface
+import { useUserStore } from '../src/store/useUserStore'; // Importe nosso estado global
 
-export default function Comparador() {
-  // Estado para armazenar a distância que o usuário digita. Começamos com 5km.
-  const [distanciaInput, setDistanciaInput] = useState<string>('5');
+export default function ComparadorScreen() {
+  
+  const params = useLocalSearchParams();
+  const router = useRouter();
+  const [distanciaInput, setDistanciaInput] = useState<string>(
+    params.distancia ? String(params.distancia) : '5'
+  );
+  const { adicionarPontos } = useUserStore(); 
 
-  // useMemo: Um hook de performance do React. 
-  // Ele só vai refazer o cálculo das rotas se o valor do input mudar.
   const rotas = useMemo(() => {
-    // Converte o texto para número. Se o usuário apagar tudo, assume 0.
-    const distancia = parseFloat(distanciaInput) || 0; 
+    const distancia = parseFloat(distanciaInput) || 0;
     return Co2CalculatorService.gerarComparativoMock(distancia);
   }, [distanciaInput]);
 
+
+  const handleEscolherRota = (rota: ResumoRota) => {
+    if (rota.modo === 'CARRO') {
+
+      Alert.alert(
+        'Atenção!',
+        'Esta rota tem alta emissão de CO2 e não gera pontos no ranking. Tem certeza?',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { text: 'Confirmar', onPress: () => router.push('/') } // Finge que iniciou a viagem voltando pro mapa
+        ]
+      );
+      return;
+    }
+
+
+    const pontosGanhos = (rota.modo === 'BICICLETA' || rota.modo === 'CAMINHADA') ? 100 : 50;
+
+
+    adicionarPontos(pontosGanhos);
+
+    Alert.alert(
+      'Missão Sustentável!',
+      `Parabéns pela escolha! Você economizou CO2 e ganhou ${pontosGanhos} XP!`,
+      [
+        { text: 'Ver Ranking', onPress: () => router.push('/ranking') }
+      ]
+    );
+  };
+
   return (
-    // KeyboardAvoidingView evita que o teclado do celular cubra o input
-    <KeyboardAvoidingView 
-      style={styles.container} 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={styles.titulo}>Qual a distância do seu trajeto?</Text>
-        
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            keyboardType="numeric"
-            value={distanciaInput}
-            onChangeText={setDistanciaInput}
-            placeholder="Ex: 5.5"
-            maxLength={4}
-          />
-          <Text style={styles.unidade}>Km</Text>
-        </View>
 
-        <Text style={styles.subtitulo}>Impacto estimado:</Text>
 
-        {/* Renderizando a lista de cards baseada no array retornado pelo nosso Serviço */}
         {rotas.map((rota) => (
-          <CardTransporte 
-            key={rota.id} 
-            rota={rota} 
-            // Se for bike ou caminhada, damos aquele destaque sustentável visual
-            isSustentavel={rota.modo === 'BICICLETA' || rota.modo === 'CAMINHADA'} 
+          <CardTransporte
+            key={rota.id}
+            rota={rota}
+            isSustentavel={rota.modo === 'BICICLETA' || rota.modo === 'CAMINHADA' || rota.modo === 'ONIBUS'}
+            onEscolher={handleEscolherRota} // Passamos a nossa função para o componente
           />
         ))}
 
@@ -52,7 +68,6 @@ export default function Comparador() {
     </KeyboardAvoidingView>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

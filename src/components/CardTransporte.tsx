@@ -1,16 +1,17 @@
 import React from "react";
 import { StyleSheet } from "react-native";
 import { ModoTransporte, ResumoRota } from "../types";
-import { Text, View } from "react-native";
+import { Text, View, TouchableOpacity } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 
 interface Props {
     rota: ResumoRota;
     isSustentavel?: boolean;
+    onEscolher: (rota: ResumoRota) => void;
 }
 
-export function CardTransporte({ rota, isSustentavel }: Props) {
+export function CardTransporte({ rota, isSustentavel, onEscolher}: Props) {
 
     const getIcone = (modo: ModoTransporte) => {
         switch (modo) {
@@ -51,6 +52,18 @@ export function CardTransporte({ rota, isSustentavel }: Props) {
                     {rota.custoEstimadoReais === 0 ? 'Grátis' : `R$ ${rota.custoEstimadoReais.toFixed(2)}`}
                 </Text>
             </View>
+
+            {onEscolher && (
+                <TouchableOpacity 
+                    style={[styles.botaoEscolher, isSustentavel ? styles.botaoVerde : styles.botaoCinza]}
+                    onPress={() => onEscolher(rota)}
+                >
+                    <Text style={styles.textoBotao}>
+                        {isSustentavel ? 'Escolher e Ganhar XP' : 'Selecionar Trajeto'}
+                    </Text>
+                </TouchableOpacity>
+            )}
+
         </View>
 
 
@@ -103,5 +116,22 @@ const styles = StyleSheet.create({
     textoVerde: {
         color: '#10B981',
         fontWeight: 'bold',
+    },
+    botaoEscolher: {
+        marginTop: 16,
+        paddingVertical: 12,
+        borderRadius: 8,
+        alignItems: 'center',
+    },
+    botaoVerde: {
+        backgroundColor: '#10B981',
+    },
+    botaoCinza: {
+        backgroundColor: '#64748B',
+    },
+    textoBotao: {
+        color: '#FFFFFF',
+        fontWeight: 'bold',
+        fontSize: 16,
     }
 });
