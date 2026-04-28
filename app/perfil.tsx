@@ -1,24 +1,43 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert, KeyboardAvoidingView, Platform, Switch, Modal } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert, KeyboardAvoidingView, Platform, Switch, Modal, LayoutAnimation, UIManager } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useUserStore } from '../src/store/useUserStore';
 import { calcularNivel } from '../src/utils/gamificacao';
 import { lightTheme, darkTheme } from '../src/store/Colors';
 
 export default function PerfilScreen() {
-    const { nome, email, pontos, idade, endereco, atualizarAnalytics, logout, theme, toggleTheme } = useUserStore();
+    const { nome, email, senha, pontos, idade, endereco, atualizarAnalytics, logout, theme, toggleTheme, atualizarSenha } = useUserStore();
     const nivelInfo = calcularNivel(pontos);
 
+    // Separa o endereço em cidade e UF para os inputs
+    const [initialCidade, initialUf] = useMemo(() => {
+        if (!endereco || !endereco.includes(',')) {
+            return [endereco || '', '']; // Trata endereço vazio ou mal formatado
+        }
+        const parts = endereco.split(',');
+        const cidade = parts[0].trim();
+        const uf = parts.slice(1).join(',').trim();
+        return [cidade, uf];
+    }, [endereco]);
+
     const [inputIdade, setInputIdade] = useState(idade);
-    const [inputEndereco, setInputEndereco] = useState(endereco);
+    const [inputCidade, setInputCidade] = useState(initialCidade);
+    const [inputUf, setInputUf] = useState(initialUf);
+
     const [modalSenhaVisivel, setModalSenhaVisivel] = useState(false);
     const [senhaAtual, setSenhaAtual] = useState('');
     const [novaSenha, setNovaSenha] = useState('');
 
+    // Verifica se houve alguma alteração nos dados para exibir o botão de salvar
+    const hasChanges = useMemo(() =>
+        inputIdade !== idade || inputCidade !== initialCidade || inputUf !== initialUf,
+        [inputIdade, inputCidade, inputUf, idade, initialCidade, initialUf]
+    );
 
     const handleSalvarDados = () => {
-        atualizarAnalytics(inputIdade, inputEndereco);
-        Alert.alert("Sucesso", "Seus dados de Analytics foram atualizados!");
+        const novoEndereco = `${inputCidade}, ${inputUf.toUpperCase()}`;
+        atualizarAnalytics(inputIdade, novoEndereco);
+        Alert.alert("Sucesso", "Seus dados foram atualizados!");
     };
 
     const handleTrocarSenha = () => {
@@ -27,7 +46,13 @@ export default function PerfilScreen() {
             return;
         }
 
-        // Simula a requisição de troca de senha no backend
+        if (senhaAtual !== senha) {
+            Alert.alert('Erro', 'A senha atual não coincide.');
+            return;
+        }
+
+        // Simula a requisição de troca de senha e atualiza o estado global
+        atualizarSenha(novaSenha);
         Alert.alert('Sucesso', 'Sua senha foi alterada com sucesso!', [
             {
                 text: 'OK',
@@ -44,6 +69,12 @@ export default function PerfilScreen() {
 
     const isDark = theme === 'dark';
     const styles = getStyles(colors);
+
+    // Animação para o botão de salvar aparecer/desaparecer
+    if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+        UIManager.setLayoutAnimationEnabledExperimental(true);
+    }
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
 
     return (
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -90,20 +121,36 @@ export default function PerfilScreen() {
                         />
                     </View>
 
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Endereço Principal</Text>
-                        <TextInput
-                            style={styles.input}
-                            value={inputEndereco}
-                            onChangeText={setInputEndereco}
-                            placeholder="Sua cidade, Estado (UF)"
-                            placeholderTextColor={colors.textMuted}
-                        />
+                    <View style={styles.addressRow}>
+                        <View style={styles.inputGroupFlex}>
+                            <Text style={styles.label}>Cidade</Text>
+                            <TextInput
+                                style={styles.input}
+                                value={inputCidade}
+                                onChangeText={setInputCidade}
+                                placeholder="Sua cidade"
+                                placeholderTextColor={colors.textMuted}
+                            />
+                        </View>
+                        <View style={styles.inputGroupFixed}>
+                            <Text style={styles.label}>UF</Text>
+                            <TextInput
+                                style={styles.input}
+                                value={inputUf}
+                                onChangeText={setInputUf}
+                                placeholder="SP"
+                                placeholderTextColor={colors.textMuted}
+                                maxLength={2}
+                                autoCapitalize="characters"
+                            />
+                        </View>
                     </View>
 
-                    <TouchableOpacity style={styles.saveButton} onPress={handleSalvarDados}>
-                        <Text style={styles.saveButtonText}>Salvar Alterações</Text>
-                    </TouchableOpacity>
+                    {hasChanges && (
+                        <TouchableOpacity style={styles.saveButton} onPress={handleSalvarDados}>
+                            <Text style={styles.saveButtonText}>Salvar Alterações</Text>
+                        </TouchableOpacity>
+                    )}
                 </View>
 
                 <View style={styles.section}>
@@ -186,6 +233,17 @@ const getStyles = (colors: typeof lightTheme | typeof darkTheme) => StyleSheet.c
         justifyContent: 'space-between',
         alignItems: 'center',
     },
+    addressRow: {
+        flexDirection: 'row',
+        gap: 16,
+        marginBottom: 16,
+    },
+    inputGroupFlex: {
+        flex: 1,
+    },
+    inputGroupFixed: {
+        width: 80,
+    },
     inputGroup: { marginBottom: 16 },
     label: { fontSize: 14, color: colors.textMuted, marginBottom: 8 },
     input: {
@@ -198,7 +256,7 @@ const getStyles = (colors: typeof lightTheme | typeof darkTheme) => StyleSheet.c
         fontSize: 16
     },
     inputDisabled: { backgroundColor: colors.inputBackground, color: colors.textMuted },
-    saveButton: { backgroundColor: '#10B981', padding: 12, borderRadius: 8, alignItems: 'center', marginTop: 8 },
+    saveButton: { backgroundColor: '#10B981', padding: 12, borderRadius: 8, alignItems: 'center' },
     saveButtonText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
     actionButton: { flexDirection: 'row', alignItems: 'center', paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: colors.border },
     actionButtonText: { fontSize: 16, color: colors.text, marginLeft: 12 },

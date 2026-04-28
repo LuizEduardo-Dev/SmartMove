@@ -26,7 +26,7 @@ export default function CadastroScreen() {
 
     const onSubmit = (data: CadastroData) => {
         // Salva no Zustand
-        cadastrar(data.nome, data.email);
+        cadastrar(data.nome, data.email, data.senha);
     };
 
     return (
