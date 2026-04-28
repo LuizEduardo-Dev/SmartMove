@@ -1,18 +1,22 @@
 import React from "react";
 import { StyleSheet } from "react-native";
 import { ModoTransporte, ResumoRota } from "../types";
-import { Text, View, TouchableOpacity } from "react-native";
+import { Text, View, TouchableOpacity, ViewStyle } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { lightTheme, darkTheme } from "../store/Colors";
 
 
 interface Props {
     rota: ResumoRota;
     isSustentavel?: boolean;
     onEscolher: (rota: ResumoRota) => void;
+    colors: typeof lightTheme | typeof darkTheme;
 }
 
-export function CardTransporte({ rota, isSustentavel, onEscolher}: Props) {
+export function CardTransporte({ rota, isSustentavel, onEscolher, colors }: Props) {
 
+    const styles = getStyles(colors, rota, isSustentavel);
+    
     const getIcone = (modo: ModoTransporte) => {
         switch (modo) {
             case 'CARRO': return 'car-hatchback';
@@ -24,38 +28,38 @@ export function CardTransporte({ rota, isSustentavel, onEscolher}: Props) {
     };
 
     return (
-        <View style={[styles.card, isSustentavel && styles.cardDestaque]}>
+        <View style={styles.card}>
             <View style={styles.header}>
                 <MaterialCommunityIcons
                     name={getIcone(rota.modo)}
                     size={32}
-                    color={isSustentavel ? '#10B981' : '#475569'}
+                    color={isSustentavel ? colors.primary : colors.textMuted}
                 />
                 <Text style={styles.titulo} >{rota.modo}</Text>
             </View>
 
             <View>
-                <MaterialCommunityIcons name="clock-outline" size={20} color="#64748B" />
+                <MaterialCommunityIcons name="clock-outline" size={20} color={colors.textMuted} />
                 <Text style={styles.textoInfo}>{rota.tempoEstimadoMinutos} min</Text>
             </View>
 
             <View style={styles.infoRow}>
-                <MaterialCommunityIcons name="molecule-co2" size={20} color={rota.emissaoCO2Gramas === 0 ? '#10B981' : '#EF4444'} />
-                <Text style={[styles.textoInfo, rota.emissaoCO2Gramas === 0 && styles.textoVerde]}>
+                <MaterialCommunityIcons name="molecule-co2" size={20} color={rota.emissaoCO2Gramas === 0 ? colors.primary : colors.danger} />
+                <Text style={styles.textoEmissao}>
                     {rota.emissaoCO2Gramas === 0 ? 'Zero Emissão!' : `${rota.emissaoCO2Gramas}g emitidos`}
                 </Text>
             </View>
 
             <View style={styles.infoRow}>
-                <MaterialCommunityIcons name="cash" size={20} color="#64748B" />
+                <MaterialCommunityIcons name="cash" size={20} color={colors.textMuted} />
                 <Text style={styles.textoInfo}>
                     {rota.custoEstimadoReais === 0 ? 'Grátis' : `R$ ${rota.custoEstimadoReais.toFixed(2)}`}
                 </Text>
             </View>
 
             {onEscolher && (
-                <TouchableOpacity 
-                    style={[styles.botaoEscolher, isSustentavel ? styles.botaoVerde : styles.botaoCinza]}
+                <TouchableOpacity
+                    style={styles.botaoEscolher}
                     onPress={() => onEscolher(rota)}
                 >
                     <Text style={styles.textoBotao}>
@@ -70,38 +74,37 @@ export function CardTransporte({ rota, isSustentavel, onEscolher}: Props) {
     );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (
+    colors: typeof lightTheme | typeof darkTheme,
+    rota: ResumoRota,
+    isSustentavel?: boolean
+) => StyleSheet.create({
     card: {
-        backgroundColor: '#FFFFFF',
+        backgroundColor: isSustentavel ? colors.primaryBackground : colors.card,
         borderRadius: 12,
         padding: 16,
         marginBottom: 16,
         borderWidth: 1,
-        borderColor: '#E2E8F0',
+        borderColor: isSustentavel ? colors.primary : colors.border,
         elevation: 2, // Sombra no Android
-        shadowColor: '#000', // Sombra no iOS
+        shadowColor: colors.text, // Sombra no iOS
         shadowOpacity: 0.1,
         shadowRadius: 4,
         shadowOffset: { width: 0, height: 2 },
-    },
-    cardDestaque: {
-        borderColor: '#10B981',
-        borderWidth: 2,
-        backgroundColor: '#F0FDF4', // Fundo levemente verde
-    },
+    } as ViewStyle,
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         marginBottom: 12,
         borderBottomWidth: 1,
-        borderBottomColor: '#F1F5F9',
+        borderBottomColor: colors.border,
         paddingBottom: 8,
     },
     titulo: {
         fontSize: 18,
         fontWeight: 'bold',
         marginLeft: 8,
-        color: '#1E293B',
+        color: colors.text,
     },
     infoRow: {
         flexDirection: 'row',
@@ -111,24 +114,21 @@ const styles = StyleSheet.create({
     textoInfo: {
         fontSize: 16,
         marginLeft: 8,
-        color: '#475569',
+        color: colors.textMuted,
     },
-    textoVerde: {
-        color: '#10B981',
-        fontWeight: 'bold',
+    textoEmissao: {
+        fontSize: 16,
+        marginLeft: 8,
+        color: rota.emissaoCO2Gramas === 0 ? colors.primary : colors.textMuted,
+        fontWeight: rota.emissaoCO2Gramas === 0 ? 'bold' : 'normal',
     },
     botaoEscolher: {
         marginTop: 16,
         paddingVertical: 12,
         borderRadius: 8,
         alignItems: 'center',
-    },
-    botaoVerde: {
-        backgroundColor: '#10B981',
-    },
-    botaoCinza: {
-        backgroundColor: '#64748B',
-    },
+        backgroundColor: isSustentavel ? colors.primary : colors.textMuted,
+    } as ViewStyle,
     textoBotao: {
         color: '#FFFFFF',
         fontWeight: 'bold',

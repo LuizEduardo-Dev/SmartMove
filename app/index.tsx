@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+// app/index.tsx
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, Keyboard } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -7,25 +8,55 @@ import { LOCAIS_MOCK, LocalInteresse } from '../src/mocks/locais';
 
 export default function HomeScreen() {
   const router = useRouter();
-  
+
+  // REFERÊNCIA DO MAPA: Necessário para controlarmos a câmera via código
+  const mapRef = useRef<MapView>(null);
+
   const [busca, setBusca] = useState('');
   const [destino, setDestino] = useState<LocalInteresse | null>(null);
 
   const origin = LOCAIS_MOCK[0];
 
-  const locaisFiltrados = LOCAIS_MOCK.filter(
-    (local) => local.id !== origin.id && local.nome.toLowerCase().includes(busca.toLowerCase())
-  );
+  // PERFORMANCE: Só refiltra a lista se a 'busca' mudar. 
+  // Também impede de mostrar a lista inteira se o input estiver vazio.
+  const locaisFiltrados = useMemo(() => {
+    if (busca.trim() === '') return [];
+    return LOCAIS_MOCK.filter(
+      (local) => local.id !== origin.id && local.nome.toLowerCase().includes(busca.toLowerCase())
+    );
+  }, [busca]);
 
   const handleSelecionarDestino = (local: LocalInteresse) => {
     setDestino(local);
-    setBusca(local.nome); 
-    Keyboard.dismiss(); 
+    setBusca(local.nome);
+    Keyboard.dismiss();
   };
+
+  useEffect(() => {
+    if (destino && mapRef.current) {
+
+      mapRef.current.fitToCoordinates(
+        [origin.coordenadas, destino.coordenadas],
+        {
+          edgePadding: { top: 150, right: 50, bottom: 150, left: 50 },
+          animated: true,
+        }
+      );
+    } else if (!destino && mapRef.current) {
+
+      mapRef.current.animateToRegion({
+        latitude: origin.coordenadas.latitude,
+        longitude: origin.coordenadas.longitude,
+        latitudeDelta: 0.03,
+        longitudeDelta: 0.03,
+      }, 1000);
+    }
+  }, [destino, origin]);
 
   return (
     <View style={styles.container}>
       <MapView
+        ref={mapRef}
         style={styles.map}
         initialRegion={{
           latitude: origin.coordenadas.latitude,
@@ -35,7 +66,7 @@ export default function HomeScreen() {
         }}
       >
         <Marker coordinate={origin.coordenadas} title={origin.nome} pinColor="#475569" />
-        
+
         {destino && (
           <>
             <Marker coordinate={destino.coordenadas} title={destino.nome} pinColor="#10B981" />
@@ -49,29 +80,27 @@ export default function HomeScreen() {
         )}
       </MapView>
 
-      <View style={styles.overlayContainer}>
-
+      <View style={styles.topContainer}>
         <View style={styles.searchBox}>
           <MaterialCommunityIcons name="magnify" size={24} color="#64748B" />
-          <TextInput 
-            style={styles.searchInput} 
-            placeholder="Para onde vamos?" 
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Para onde vamos?"
             placeholderTextColor="#94A3B8"
             value={busca}
             onChangeText={(texto) => {
               setBusca(texto);
-              if (texto === '') setDestino(null); 
+              if (texto === '') setDestino(null);
             }}
           />
         </View>
-
 
         {busca.length > 0 && !destino && (
           <FlatList
             data={locaisFiltrados}
             keyExtractor={(item) => item.id}
             style={styles.listaResultados}
-            keyboardShouldPersistTaps="handled" 
+            keyboardShouldPersistTaps="handled"
             renderItem={({ item }) => (
               <TouchableOpacity style={styles.itemResultado} onPress={() => handleSelecionarDestino(item)}>
                 <MaterialCommunityIcons name="map-marker" size={20} color="#64748B" />
@@ -83,23 +112,27 @@ export default function HomeScreen() {
             )}
           />
         )}
-
-
-        <TouchableOpacity 
-          style={[styles.actionButton, !destino && styles.actionButtonDisabled]}
-          disabled={!destino}
-          onPress={() => {
-
-            router.push({
-              pathname: '/comparador',
-              params: { distancia: destino?.distanciaSimuladaKm }
-            });
-          }}
-        >
-          <MaterialCommunityIcons name="leaf" size={24} color="#FFF" />
-          <Text style={styles.actionButtonText}>Analisar Impacto Ambiental</Text>
-        </TouchableOpacity>
       </View>
+
+      {destino && (
+        <View style={styles.bottomContainer}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => {
+              router.navigate({
+                pathname: '/comparador',
+                params: {
+                  distancia: destino.distanciaSimuladaKm,
+                  destinoNome: destino.nome
+                }
+              });
+            }}
+          >
+            <MaterialCommunityIcons name="leaf" size={24} color="#FFF" />
+            <Text style={styles.actionButtonText}>Analisar Impacto Ambiental</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }
@@ -107,12 +140,20 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   map: { width: '100%', height: '100%' },
-  overlayContainer: {
+  // Layout Corrigido: Topo e Base separados
+  topContainer: {
     position: 'absolute',
-    top: 50,  
+    top: 50,
     left: 20,
     right: 20,
     gap: 12,
+    zIndex: 10, // Garante que fique acima de tudo
+  },
+  bottomContainer: {
+    position: 'absolute',
+    bottom: 20, // Fica flutuando 20 pixels acima do Menu do app
+    left: 20,
+    right: 20,
   },
   searchBox: {
     flexDirection: 'row',
@@ -161,10 +202,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     height: 56,
     elevation: 4,
-    marginTop: 'auto', // Joga o botão para baixo dependendo do tamanho da tela
-  },
-  actionButtonDisabled: {
-    backgroundColor: '#94A3B8', 
   },
   actionButtonText: {
     color: '#FFFFFF',
