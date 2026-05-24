@@ -37,10 +37,10 @@ export default function ComparadorScreen() {
     }
 
     const ultimaVezQueFoiParaODestino = viagensFeitas[String(destinoNome)];
-    if (ultimaVezQueFoiParaODestino && Date.now()) {
-      const tempoFaltanteSegundos = Math.ceil((TEMPO_COOLDOWN_MS - (Date.now() - ultimaVezQueFoiParaODestino)))
+    if (ultimaVezQueFoiParaODestino && (Date.now() - ultimaVezQueFoiParaODestino) < TEMPO_COOLDOWN_MS) {
+      const tempoFaltanteSegundos = Math.ceil((TEMPO_COOLDOWN_MS - (Date.now() - ultimaVezQueFoiParaODestino)) / 1000)
       
-      Alert.alert('Descanso Merecido!', 'Você acabou de registrar uma viagem para cá! Descanse por mais ${tempoFaltanteSegundos} segundos antes de ganhar XP nessa mesma rota.');
+      Alert.alert('Descanso Merecido!', `Você acabou de registrar uma viagem para cá! Descanse por mais ${tempoFaltanteSegundos} segundos antes de ganhar XP nessa mesma rota.`);
       return;
     }
 
