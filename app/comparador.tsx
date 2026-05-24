@@ -11,8 +11,10 @@ import { lightTheme, darkTheme } from '../src/store/Colors';
 export default function ComparadorScreen() {
   const { distancia, destinoNome } = useLocalSearchParams();
   const router = useRouter();
-  const { adicionarPontos, theme } = useUserStore();
+  const { adicionarPontosViagem, viagensFeitas, theme } = useUserStore();
   const colors = theme === 'light' ? lightTheme : darkTheme;
+
+  const TEMPO_COOLDOWN_MS = 2 * 60 * 1000;
 
   const temRotaSelecionada = !!distancia;
 
@@ -34,8 +36,16 @@ export default function ComparadorScreen() {
       return;
     }
 
+    const ultimaVezQueFoiParaODestino = viagensFeitas[String(destinoNome)];
+    if (ultimaVezQueFoiParaODestino && Date.now()) {
+      const tempoFaltanteSegundos = Math.ceil((TEMPO_COOLDOWN_MS - (Date.now() - ultimaVezQueFoiParaODestino)))
+      
+      Alert.alert('Descanso Merecido!', 'Você acabou de registrar uma viagem para cá! Descanse por mais ${tempoFaltanteSegundos} segundos antes de ganhar XP nessa mesma rota.');
+      return;
+    }
+
     const pontosGanhos = (rota.modo === 'BICICLETA' || rota.modo === 'CAMINHADA') ? 100 : 50;
-    adicionarPontos(pontosGanhos);
+    adicionarPontosViagem(String(destinoNome), pontosGanhos);
 
     Alert.alert(
       'Missão Sustentável!',

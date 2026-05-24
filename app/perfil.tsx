@@ -47,7 +47,7 @@ export default function PerfilScreen() {
         }
 
         if (senhaAtual !== senha) {
-            Alert.alert('Erro', 'A senha atual não coincide.');
+            Alert.alert('Atenção', 'As senhas não coincidem');
             return;
         }
 
