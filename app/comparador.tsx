@@ -9,14 +9,19 @@ import { useUserStore } from '../src/store/useUserStore';
 import { lightTheme, darkTheme } from '../src/store/Colors';
 
 export default function ComparadorScreen() {
-  const { distancia, destinoNome } = useLocalSearchParams();
   const router = useRouter();
-  const { adicionarPontosViagem, viagensFeitas, theme } = useUserStore();
+  const { adicionarPontosViagem, viagensFeitas, theme, rotaAtual } = useUserStore();
+  
   const colors = theme === 'light' ? lightTheme : darkTheme;
 
   const TEMPO_COOLDOWN_MS = 2 * 60 * 1000;
+  const distancia = rotaAtual?.distancia || 0;
+  const destinoNome = rotaAtual?.destinoNome || '';
 
   const temRotaSelecionada = !!distancia;
+
+  
+
 
   const rotas = useMemo(() => {
     if (!temRotaSelecionada) return [];

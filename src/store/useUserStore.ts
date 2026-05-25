@@ -10,6 +10,8 @@ interface UserState {
   theme: 'light' | 'dark';
   senha: string; 
   viagensFeitas: Record<string, number>;
+  rotaAtual: {distancia: number; destinoNome: string} | null;
+  setRotaAtual: (rota: {distancia: number; destinoNome: string} | null) => void;
   cadastrar: (nome: string, email: string, senha: string) => void;
   atualizarAnalytics: (idade: string, endereco: string) => void;
   adicionarPontosViagem: (destino: string, valor: number) => void;
@@ -28,6 +30,8 @@ export const useUserStore = create<UserState>((set) => ({
   theme: 'light', // Tema padrão
   senha: '', // Estado inicial da senha
   viagensFeitas: {},
+  rotaAtual: null,
+  setRotaAtual: (rota) => set({rotaAtual: rota}),
   
   cadastrar: (nome, email, senha) => set({ nome, email, senha, isLogado: true }),
 

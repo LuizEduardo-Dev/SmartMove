@@ -1,13 +1,13 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert, KeyboardAvoidingView, Platform, Switch, Modal, LayoutAnimation, UIManager } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useUserStore } from '../src/store/useUserStore';
-import { calcularNivel } from '../src/utils/gamificacao';
+import { calcularProgresso } from '../src/utils/gamificacao';
 import { lightTheme, darkTheme } from '../src/store/Colors';
 
 export default function PerfilScreen() {
     const { nome, email, senha, pontos, idade, endereco, atualizarAnalytics, logout, theme, toggleTheme, atualizarSenha } = useUserStore();
-    const nivelInfo = calcularNivel(pontos);
+    const nivelInfo = calcularProgresso(pontos);
 
     // Separa o endereço em cidade e UF para os inputs
     const [initialCidade, initialUf] = useMemo(() => {
@@ -74,7 +74,11 @@ export default function PerfilScreen() {
     if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
         UIManager.setLayoutAnimationEnabledExperimental(true);
     }
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    useEffect(() => {
+
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+
+    }, [])
 
     return (
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -84,7 +88,7 @@ export default function PerfilScreen() {
                         <Text style={styles.avatarText}>{nome.charAt(0).toUpperCase()}</Text>
                     </View>
                     <Text style={styles.nome}>{nome}</Text>
-                    <Text style={styles.nivel}>{nivelInfo.titulo}</Text>
+                    <Text style={styles.nivel}>{nivelInfo.tituloAtual}</Text>
                 </View>
 
                 <View style={styles.section}>
@@ -272,7 +276,7 @@ const getStyles = (colors: typeof lightTheme | typeof darkTheme) => StyleSheet.c
         borderColor: colors.dangerBorder
     },
     logoutText: { fontSize: 16, fontWeight: 'bold', color: colors.danger, marginLeft: 8 },
-    
+
     modalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.5)',

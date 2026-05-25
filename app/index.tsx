@@ -5,9 +5,11 @@ import MapView, { Marker, Polyline } from 'react-native-maps';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { LOCAIS_MOCK, LocalInteresse } from '../src/mocks/locais';
+import { useUserStore } from '../src/store/useUserStore';
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { setRotaAtual } = useUserStore();
 
   // REFERÊNCIA DO MAPA: Necessário para controlarmos a câmera via código
   const mapRef = useRef<MapView>(null);
@@ -30,6 +32,7 @@ export default function HomeScreen() {
     setDestino(local);
     setBusca(local.nome);
     Keyboard.dismiss();
+    setRotaAtual({ distancia: local.distanciaSimuladaKm, destinoNome: local.nome });
   };
 
   useEffect(() => {
@@ -90,7 +93,10 @@ export default function HomeScreen() {
             value={busca}
             onChangeText={(texto) => {
               setBusca(texto);
-              if (texto === '') setDestino(null);
+              if (texto === '') {
+                setDestino(null);
+                setRotaAtual(null);
+              }
             }}
           />
         </View>
@@ -118,15 +124,7 @@ export default function HomeScreen() {
         <View style={styles.bottomContainer}>
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() => {
-              router.navigate({
-                pathname: '/comparador',
-                params: {
-                  distancia: destino.distanciaSimuladaKm,
-                  destinoNome: destino.nome
-                }
-              });
-            }}
+            onPress={() => router.navigate('/comparador')} // <-- Só navega limpo agora!
           >
             <MaterialCommunityIcons name="leaf" size={24} color="#FFF" />
             <Text style={styles.actionButtonText}>Analisar Impacto Ambiental</Text>
