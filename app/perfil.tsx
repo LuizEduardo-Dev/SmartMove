@@ -195,6 +195,7 @@ export default function PerfilScreen() {
                                 style={styles.input}
                                 secureTextEntry
                                 placeholder="Sua senha atual"
+                                placeholderTextColor={colors.textMuted}
                                 value={senhaAtual}
                                 onChangeText={setSenhaAtual}
                             />
@@ -206,6 +207,7 @@ export default function PerfilScreen() {
                                 style={styles.input}
                                 secureTextEntry
                                 placeholder="Mínimo de 6 caracteres"
+                                placeholderTextColor={colors.textMuted}
                                 value={novaSenha}
                                 onChangeText={setNovaSenha}
                             />
