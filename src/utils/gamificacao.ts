@@ -7,12 +7,12 @@ export interface NivelDefinicao {
 }
 
 export const TODOS_NIVEIS: NivelDefinicao[] = [
-  {id: 1, titulo: '', xpMinimo: 0, icone: 'seedling', descricao: ''},
-  {id: 2, titulo: '', xpMinimo: 100, icone: 'leaf', descricao: ''},
-  {id: 3, titulo: '', xpMinimo: 300, icone: 'bike', descricao: ''},
-  {id: 4, titulo: '', xpMinimo: 600, icone: 'earth', descricao: ''},
-  {id: 5, titulo: '', xpMinimo: 1000, icone: 'tree', descricao: ''}
-]
+  { id: 1, titulo: 'Protetor Iniciante', xpMinimo: 0, icone: 'seedling', descricao: 'Dando os primeiros passos para um mundo mais limpo.' },
+  { id: 2, titulo: 'Explorador Eco', xpMinimo: 100, icone: 'leaf', descricao: 'Já entende o impacto das suas escolhas diárias.' },
+  { id: 3, titulo: 'Ciclista Urbano', xpMinimo: 300, icone: 'bike', descricao: 'O transporte alternativo já faz parte da sua rotina.' },
+  { id: 4, titulo: 'Guardião do Clima', xpMinimo: 600, icone: 'earth', descricao: 'Um verdadeiro exemplo de mobilidade sustentável.' },
+  { id: 5, titulo: 'Mestre da Sustentabilidade', xpMinimo: 1000, icone: 'tree', descricao: 'Lenda viva! Seu impacto positivo é imensurável.' },
+];
 
 export interface InfoProgresso {
   tituloAtual: string;
